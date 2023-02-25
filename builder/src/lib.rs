@@ -44,6 +44,15 @@ fn generate_builder(derive_input: DeriveInput) -> Result<TokenStream, syn::Error
         }
     };
 
+    let checks = fields_ident.iter().map(|ident| {
+        let err_msg = format!("{} is required.", ident);
+        quote! {
+            if self.#ident.is_none() {
+                return Err(#err_msg.into())
+            }
+        }
+    });
+
     let expanded = quote! {
         #vis struct #builder_ident {
             #(#fields_ident: Option<#fields_ty>),*
@@ -54,6 +63,14 @@ fn generate_builder(derive_input: DeriveInput) -> Result<TokenStream, syn::Error
                 self.#fields_ident = Some(#fields_ident);
                 self
             })*
+
+            pub fn build(&mut self) -> Result<#ident, Box<dyn std::error::Error>> {
+                #(#checks)*
+
+                Ok(#ident {
+                    #(#fields_ident: self.#fields_ident.clone().unwrap()),*
+                })
+            }
         }
 
         impl #ident {
