@@ -49,6 +49,13 @@ fn generate_builder(derive_input: DeriveInput) -> Result<TokenStream, syn::Error
             #(#fields_ident: Option<#fields_ty>),*
         }
 
+        impl #builder_ident {
+            #(pub fn #fields_ident(&mut self, #fields_ident: #fields_ty) -> &mut Self {
+                self.#fields_ident = Some(#fields_ident);
+                self
+            })*
+        }
+
         impl #ident {
             pub fn builder() -> #builder_ident {
                 #builder_ident {
